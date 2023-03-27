@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/Assets/Font/Audiowide.ttf",
+      "sha1": "651503b7a0a89f49f78f14d04c62f811853573cd"
+    },
+    {
+      "path": "src/Assets/Font/DailyHours.ttf",
+      "sha1": "090d292dfa371ba775c5a3ca132b9204effdd4b6"
+    }
+  ]
+}
