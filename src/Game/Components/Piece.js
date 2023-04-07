@@ -9,6 +9,7 @@ import RedPiece from '../Assets/Pawns/RedPawn.png';
 import YellowPiece from '../Assets/Pawns/YellowPawn.png';
 
 const stepAudio = new Sound('step.wav', Sound.MAIN_BUNDLE);
+stepAudio.setVolume(0.5);
 
 const rotate = {
 	from: {
@@ -31,7 +32,7 @@ class Piece extends Component {
 	}
 
 	componentDidUpdate(prevProps) {
-		const {position, animateForSelection} = this.props;
+		const {position} = this.props;
 		if (prevProps.position[0] !== position[0] || prevProps.position[1] !== position[1]) {
 			this.animate(position);
 			stepAudio.play();
@@ -44,11 +45,12 @@ class Piece extends Component {
 	}
 
 	animate(position) {
+		const right = this.props.color === this.props.currentUser ? 3 : -3;
 		Animated.timing(this.animation, {
-			toValue: {x: position[0], y: position[1]},
+			toValue: {x: position[0] + right, y: position[1]},
 			duration: 130,
 			useNativeDriver: true,
-			easing: Easing.ease,
+			easing: Easing.inOut(Easing.ease),
 		}).start();
 	}
 
@@ -70,12 +72,13 @@ class Piece extends Component {
 
 	render() {
 		// console.log(this.props);
-		const {size, name, onTouch, animateForSelection} = this.props;
+		const {size, onTouch, animateForSelection, currentUser, color} = this.props;
 		return (
 			<Animated.View
 				style={{
 					position: 'absolute',
 					transform: [{translateX: this.animation.x}, {translateY: this.animation.y}],
+					zIndex: color === currentUser ? 4 : 1,
 				}}>
 				<TouchableOpacity
 					activeOpacity={0.8}
@@ -97,8 +100,8 @@ class Piece extends Component {
 				{animateForSelection && (
 					<AnimatableView
 						animation={rotate}
-						easing='linear'
-						iterationCount='infinite'
+						easing="linear"
+						iterationCount="infinite"
 						duration={1200}
 						style={{
 							width: size / 1.1,

@@ -238,7 +238,7 @@
 // 				} else {
 // 					this.setState(prev => ({turn: GREEN, key: prev.key + 1, timerRunning: true}));
 // 				}
-// 				// this.forceUpdate();
+// 				this.forceUpdate();
 // 				this.setState({disable: false});
 // 			}
 // 			this.disableInput = false;
@@ -297,29 +297,35 @@
 // 			if (i > startPosition) {
 // 				await new Promise(resolve => {
 // 					setTimeout(() => {
-// 						this.setState(prevState => ({
-// 							pieces: prevState.pieces.map(p => {
-// 								console.log({...p, position: cell[i], animateForSelection: false});
-// 								if (p.name === piece.name && p.color === piece.color) {
-// 									return {...p, position: cell[i], animateForSelection: false};
-// 								}
-// 								return {...p, animateForSelection: false};
-// 							}),
-// 						}));
+// 						piece.position = cell[i];
+// 						piece.animateForSelection = false;
+// 						this.forceUpdate();
+// 						// this.setState(prevState => ({
+// 						// 	pieces: prevState.pieces.map(p => {
+// 						// 		console.log({...p, position: cell[i], animateForSelection: false});
+// 						// 		if (p.name === piece.name && p.color === piece.color) {
+// 						// 			return {...p, position: cell[i], animateForSelection: false};
+// 						// 		}
+// 						// 		return {...p, animateForSelection: false};
+// 						// 	}),
+// 						// }));
 
 // 						resolve();
 // 					}, 150);
 // 				});
 // 			} else {
-// 				this.setState(prevState => ({
-// 					pieces: prevState.pieces.map(p => {
-// 						console.log({...p, position: cell[i], animateForSelection: false});
-// 						if (p.name === piece.name && p.color === piece.color) {
-// 							return {...p, position: cell[i], animateForSelection: false};
-// 						}
-// 						return {...p, animateForSelection: false};
-// 					}),
-// 				}));
+// 				piece.position = cell[i];
+// 				piece.animateForSelection = false;
+// 				this.forceUpdate();
+// 				// this.setState(prevState => ({
+// 				// 	pieces: prevState.pieces.map(p => {
+// 				// 		console.log({...p, position: cell[i], animateForSelection: false});
+// 				// 		if (p.name === piece.name && p.color === piece.color) {
+// 				// 			return {...p, position: cell[i], animateForSelection: false};
+// 				// 		}
+// 				// 		return {...p, animateForSelection: false};
+// 				// 	}),
+// 				// }));
 // 			}
 // 			if (i >= endPosition) {
 // 				return 'Completed';
@@ -393,116 +399,131 @@
 // 	}
 // }
 
-import React, {Component, useEffect, useRef, useState} from 'react';
-import {Alert, BackHandler, ImageBackground, StatusBar, Text, ToastAndroid, TouchableOpacity, View, Vibration} from 'react-native';
-import {Button, IconButton} from 'react-native-paper';
-import io from 'socket.io-client';
-import NetInfo from '@react-native-community/netinfo';
-import {Icon} from 'react-native-elements';
+import React, {useEffect, useRef, useState} from 'react';
+import {ImageBackground, StatusBar, View} from 'react-native';
 
 import styles from '../Game/Styles/styles';
-import {c} from '../Game/Utils/colors';
 import BG from '../Game/Assets/Backgrounds/GridBG.png';
-import Popup from '../Components/Popup';
 import Dice from '../Game/Components/Dice';
-import {SW} from '../Config/Config';
-import {Constants, P, B, G} from '../Game/Utils/positions';
+import {P, B} from '../Game/Utils/positions';
 import PlayerBox from '../Game/Components/PlayerBox';
 import VerticalCellContainer from '../Game/Components/VerticalCellsContainer';
 import HorizontalCellContainer from '../Game/Components/HorizontalCellsContainer';
 import Center from '../Game/Components/Center';
 import Piece from '../Game/Components/Piece';
 import TopRow from '../Game/Components/TopRow';
-import {BLUE, FINISHED, FOUR, GREEN, ONE, RED, THREE, TWO, YELLOW} from '../Game/Utils/constants';
+import {BLUE, FINISHED, GREEN} from '../Game/Utils/constants';
 import {DiceAudio} from '../Game/Components/Sounds';
 import socket from '../Game/Components/Socket';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+	selectDiceNumber,
+	selectIsRolling,
+	selectIsWaitingForRollDice,
+	selectPiece,
+	selectPlayers,
+	selectTurn,
+	setDiceNumber,
+	setIsRolling,
+	setIsWaitingForRollDice,
+	setPieces,
+	setPlayers,
+	setTurn,
+} from '../Redux/Slices/GameSlice';
 
 export default function Blue({route, navigation}) {
 	const {player1, player2, player3, player4, user, bet, gameId} = route.params;
-	const [pieces, setPieces] = useState([
-		{
-			position: P[1],
-			size: Constants.CELL_SIZE,
-			color: BLUE,
-			animateForSelection: true,
-			name: ONE,
-		},
-		{
-			position: P[1],
-			size: Constants.CELL_SIZE,
-			color: BLUE,
-			animateForSelection: false,
-			name: TWO,
-		},
-		{
-			position: P[1],
-			size: Constants.CELL_SIZE,
-			color: BLUE,
-			animateForSelection: false,
-			name: THREE,
-		},
-		{
-			position: P[1],
-			size: Constants.CELL_SIZE,
-			color: BLUE,
-			animateForSelection: false,
-			name: FOUR,
-		},
-		{
-			position: P[27],
-			size: Constants.CELL_SIZE,
-			color: GREEN,
-			animateForSelection: false,
-			name: ONE,
-		},
-		{
-			position: P[27],
-			size: Constants.CELL_SIZE,
-			color: GREEN,
-			animateForSelection: false,
-			name: TWO,
-		},
-		{
-			position: P[27],
-			size: Constants.CELL_SIZE,
-			color: GREEN,
-			animateForSelection: false,
-			name: THREE,
-		},
-		{
-			position: P[27],
-			size: Constants.CELL_SIZE,
-			color: GREEN,
-			animateForSelection: false,
-			name: FOUR,
-		},
-	]);
-	const [players, setPlayers] = useState([
-		{
-			color: BLUE,
-			user: player1,
-			score: 0,
-		},
-		{
-			color: GREEN,
-			user: player2,
-			score: 1,
-		},
-		{
-			color: YELLOW,
-			user: player3,
-			score: 0,
-		},
-		{
-			color: RED,
-			user: player4,
-			score: 0,
-		},
-	]);
-	const [turn, setTurn] = useState(BLUE);
-	const [diceNumber, setDiceNumber] = useState(0);
-	const [isWaitingForRollDice, setIsWaitingForRollDice] = useState(true);
-	const [isRolling, setIsRolling] = useState(false);
+	const dispatch = useDispatch();
+	const pieces = useSelector(selectPiece);
+	const players = useSelector(selectPlayers);
+	// const [pieces, setPieces] = useState([
+	// 	{
+	// 		position: P[1],
+	// 		size: Constants.CELL_SIZE,
+	// 		color: BLUE,
+	// 		animateForSelection: true,
+	// 		name: ONE,
+	// 	},
+	// 	{
+	// 		position: P[1],
+	// 		size: Constants.CELL_SIZE,
+	// 		color: BLUE,
+	// 		animateForSelection: false,
+	// 		name: TWO,
+	// 	},
+	// 	{
+	// 		position: P[1],
+	// 		size: Constants.CELL_SIZE,
+	// 		color: BLUE,
+	// 		animateForSelection: false,
+	// 		name: THREE,
+	// 	},
+	// 	{
+	// 		position: P[1],
+	// 		size: Constants.CELL_SIZE,
+	// 		color: BLUE,
+	// 		animateForSelection: false,
+	// 		name: FOUR,
+	// 	},
+	// 	{
+	// 		position: P[27],
+	// 		size: Constants.CELL_SIZE,
+	// 		color: GREEN,
+	// 		animateForSelection: false,
+	// 		name: ONE,
+	// 	},
+	// 	{
+	// 		position: P[27],
+	// 		size: Constants.CELL_SIZE,
+	// 		color: GREEN,
+	// 		animateForSelection: false,
+	// 		name: TWO,
+	// 	},
+	// 	{
+	// 		position: P[27],
+	// 		size: Constants.CELL_SIZE,
+	// 		color: GREEN,
+	// 		animateForSelection: false,
+	// 		name: THREE,
+	// 	},
+	// 	{
+	// 		position: P[27],
+	// 		size: Constants.CELL_SIZE,
+	// 		color: GREEN,
+	// 		animateForSelection: false,
+	// 		name: FOUR,
+	// 	},
+	// ]);
+	// const [players, setPlayers] = useState([
+	// 	{
+	// 		color: BLUE,
+	// 		user: player1,
+	// 		score: 0,
+	// 	},
+	// 	{
+	// 		color: GREEN,
+	// 		user: player2,
+	// 		score: 1,
+	// 	},
+	// 	{
+	// 		color: YELLOW,
+	// 		user: player3,
+	// 		score: 0,
+	// 	},
+	// 	{
+	// 		color: RED,
+	// 		user: player4,
+	// 		score: 0,
+	// 	},
+	// ]);
+	const turn = useSelector(selectTurn);
+	const diceNumber = useSelector(selectDiceNumber);
+	const isWaitingForRollDice = useSelector(selectIsWaitingForRollDice);
+	const isRolling = useSelector(selectIsRolling);
+	// const [turn, setTurn] = useState(BLUE);
+	// const [diceNumber, setDiceNumber] = useState(0);
+	// const [isWaitingForRollDice, setIsWaitingForRollDice] = useState(true);
+	// const [isRolling, setIsRolling] = useState(false);
 	const [timerRunning, setTimerRunning] = useState(true);
 	const [key, setKey] = useState(1);
 
@@ -510,6 +531,17 @@ export default function Blue({route, navigation}) {
 	const roomId = '' + user.id;
 
 	useEffect(() => {
+		const newPlayers = players.map(player => {
+			if (player.color === BLUE) {
+				return {...player, user: {...player1}};
+			}
+			if (player.color === GREEN) {
+				return {...player, user: {...player2}};
+			}
+			return {...player};
+		});
+		console.log('Setting State of Players', newPlayers);
+		dispatch(setPlayers(newPlayers));
 		// Dice Roll Socket Event Listener
 		socket.on('diceRoll', data => {
 			console.log(data, 'Dice Roll Data');
@@ -523,8 +555,11 @@ export default function Blue({route, navigation}) {
 						}
 						return {...piece};
 					});
-					setPieces(newPieces);
-					setDiceNumber(data);
+					console.log('Setting State of Pieces inside DiceRoll', newPieces, '\n Dice Number is', data);
+					dispatch(setPieces(newPieces));
+					dispatch(setDiceNumber(data));
+					// setPieces(newPieces);
+					// setDiceNumber(data);
 					console.log('aaaaaaaà111111111111\n');
 					// setPieces(prev => {
 					// 	prev.map(p => {
@@ -541,10 +576,11 @@ export default function Blue({route, navigation}) {
 						}
 						return {...piece};
 					});
-					setPieces(newPieces);
-					setIsWaitingForRollDice(false);
-					setIsRolling(false);
-					setDiceNumber(data);
+					console.log('Setting State of Pieces inside else DiceRoll', newPieces, '\n DiceNumber', data);
+					dispatch(setPieces(newPieces));
+					dispatch(setIsWaitingForRollDice(false));
+					dispatch(setIsRolling(false));
+					dispatch(setDiceNumber(data));
 					console.log(data);
 					console.log('Dice Roll State', diceNumber);
 					console.log('bbbbbbb22222222222222\n');
@@ -605,37 +641,35 @@ export default function Blue({route, navigation}) {
 					}
 				});
 				if (data.user_id === user.id) {
-					setPlayers(prev => {
-						prev.map(p => {
-							if (p.color === BLUE) {
-								return {...p, score: data.score};
-							}
-							if (P.color === GREEN) {
-								return {...p, score: data.score1};
-							}
-							return p;
-						});
+					const newPlayers = players.map(player => {
+						if (player.color === BLUE) {
+							return {...player, score: data.score};
+						}
+						if (player.color === GREEN) {
+							return {...player, score: data.score1};
+						}
+						return player;
 					});
+					dispatch(setPlayers(newPlayers));
 				} else {
-					setPlayers(prev => {
-						prev.map(p => {
-							if (p.color === BLUE) {
-								return {...p, score: data.score1};
-							}
-							if (P.color === GREEN) {
-								return {...p, score: data.score};
-							}
-							return p;
-						});
+					const newPlayers = players.map(player => {
+						if (player.color === BLUE) {
+							return {...player, score: data.score1};
+						}
+						if (player.color === GREEN) {
+							return {...player, score: data.score};
+						}
+						return player;
 					});
+					dispatch(setPlayers(newPlayers));
 				}
 				if (data.turn === user.id) {
-					setTurn(BLUE);
+					dispatch(setTurn(BLUE));
 					setKey(prev => prev + 1);
-					setTimerRunning(true);
-					setIsWaitingForRollDice(true);
+					dispatch(setTimerRunning(true));
+					dispatch(setIsWaitingForRollDice(true));
 				} else {
-					setTurn(GREEN);
+					dispatch(setTurn(GREEN));
 					setKey(prev => prev + 1);
 					setTimerRunning(true);
 				}
@@ -650,8 +684,8 @@ export default function Blue({route, navigation}) {
 			return;
 		}
 		DiceAudio.play();
-		setIsWaitingForRollDice(false);
-		setIsRolling(true);
+		dispatch(setIsWaitingForRollDice(false));
+		dispatch(setIsRolling(true));
 		socket.emit('diceRoll', {
 			room_id: roomId,
 			game_id: gameId,
@@ -674,15 +708,14 @@ export default function Blue({route, navigation}) {
 			game_id: gameId,
 			score: diceNumber,
 			position: piece.position[2],
-			pawn: piece.name === ONE ? 1 : piece.name === TWO ? 2 : piece.name === THREE ? 3 : piece.name === FOUR ? 4 : undefined,
+			pawn: piece.name,
 		};
 
 		socket.emit('pawnMove', data);
-		setPieces(prev => {
-			prev.map(p => {
-				return {...p, animateForSelection: false};
-			});
+		const newPieces = pieces.map(p => {
+			return {...p, animateForSelection: false};
 		});
+		dispatch(setPieces(newPieces));
 		setTimerRunning(false);
 	};
 
@@ -691,29 +724,25 @@ export default function Blue({route, navigation}) {
 			if (i > startPosition) {
 				await new Promise(resolve => {
 					setTimeout(() => {
-						setPieces(prev => {
-							prev.map(p => {
-								console.log({...p, position: cell[i], animateForSelection: false});
-								if (p.name === piece.name && p.color === piece.color) {
-									return {...p, position: cell[i], animateForSelection: false};
-								}
-								return {...p, animateForSelection: false};
-							});
+						const newPieces = pieces.map(p => {
+							if (p.name === piece.name && p.color === piece.color) {
+								return {...p, position: cell[i], animateForSelection: false};
+							}
+							return {...p, animateForSelection: false};
 						});
+						dispatch(setPieces(newPieces));
 
 						resolve();
 					}, 150);
 				});
 			} else {
-				setPieces(prev => {
-					prev.map(p => {
-						console.log({...p, position: cell[i], animateForSelection: false});
-						if (p.name === piece.name && p.color === piece.color) {
-							return {...p, position: cell[i], animateForSelection: false};
-						}
-						return {...p, animateForSelection: false};
-					});
+				const newPieces = pieces.map(p => {
+					if (p.name === piece.name && p.color === piece.color) {
+						return {...p, position: cell[i], animateForSelection: false};
+					}
+					return {...p, animateForSelection: false};
 				});
+				dispatch(setPieces(newPieces));
 			}
 			if (i >= endPosition) {
 				return 'Completed';

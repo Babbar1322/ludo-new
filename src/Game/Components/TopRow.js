@@ -25,7 +25,7 @@ export default class TopRow extends Component {
 		}
 	}
 	render() {
-		console.log('Rendered TopRow');
+		// console.log('Rendered TopRow');
 		return (
 			<View style={styles.topRow}>
 				<View style={styles.buttonContainer}>
@@ -35,7 +35,7 @@ export default class TopRow extends Component {
 					<Text style={{color: '#fff'}}>{this.props.gameId}</Text>
 				</View>
 				<TouchableOpacity activeOpacity={0.7} onPress={this.props.openSettings} style={styles.buttonContainer}>
-					<Icon name='gear' type='evilicon' color={'#fff'} />
+					<Icon name="gear" type="evilicon" color={'#fff'} />
 				</TouchableOpacity>
 				<View
 					style={[
@@ -64,7 +64,7 @@ export default class TopRow extends Component {
 								: undefined
 						}
 						color={this.getPingColor()}
-						type='material-community'
+						type="material-community"
 						size={20}
 					/>
 					<Text

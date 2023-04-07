@@ -29,6 +29,8 @@ export default function Dice({onDiceRoll, currentUser, isRolling, isWaitingForRo
 				return Dice5;
 			case 6:
 				return Dice6;
+			default:
+				return Dice1;
 		}
 	};
 

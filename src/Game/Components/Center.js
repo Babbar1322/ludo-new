@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Text, View, Image} from 'react-native';
+import {View, Image} from 'react-native';
 import {Constants} from '../Utils/positions';
 import Center1 from '../Assets/Backgrounds/Center1.png';
 import Center2 from '../Assets/Backgrounds/Center2.png';
@@ -9,6 +9,7 @@ export default class Center extends Component {
 		super(props);
 	}
 	render() {
+		const {game2} = this.props;
 		return (
 			<View
 				style={{
@@ -19,7 +20,7 @@ export default class Center extends Component {
 					overflow: 'hidden',
 				}}>
 				<Image
-					source={Center1}
+					source={game2 ? Center2 : Center1}
 					style={{
 						width: Constants.CELL_SIZE * 3,
 						height: Constants.CELL_SIZE * 3,

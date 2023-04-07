@@ -468,6 +468,7 @@ import TopRow from '../Game/Components/TopRow';
 import {BLUE, FINISHED, FOUR, GREEN, ONE, RED, THREE, TWO, YELLOW} from '../Game/Utils/constants';
 import {DiceAudio} from '../Game/Components/Sounds';
 import socket from '../Game/Components/Socket';
+import {setIsRolling} from '../Redux/Slices/GameSlice';
 
 export default class Green extends Component {
 	constructor(props) {
@@ -592,22 +593,9 @@ export default class Green extends Component {
 		socket.on('diceRoll', data => {
 			// console.log(data, 'Dice Roll Data');
 			setTimeout(() => {
-				if (turn === BLUE) {
-					DiceAudio.play();
+				if (turn === GREEN) {
+					console.log('Green Turn DiceRol');
 					this.setState(prevState => ({
-						diceNumber: data,
-						pieces: prevState.pieces.map(p => {
-							if (p.animateForSelection === true && p.color === BLUE) {
-								return {...p, animateForSelection: false};
-							}
-							return {...p};
-						}),
-					}));
-				} else {
-					this.setState(prevState => ({
-						diceNumber: data,
-						isWaitingForRollDice: false,
-						isRolling: false,
 						pieces: prevState.pieces.map(p => {
 							if (p.animateForSelection === false && p.color === GREEN) {
 								return {...p, animateForSelection: true};
@@ -615,8 +603,25 @@ export default class Green extends Component {
 							return {...p};
 						}),
 					}));
+					this.setState({
+						diceNumber: data,
+						isWaitingForRollDice: false,
+						isRolling: false,
+					});
+				} else {
+					DiceAudio.play();
+					this.setState(prevState => ({
+						pieces: prevState.pieces.map(p => {
+							if (p.animateForSelection === true && p.color === BLUE) {
+								return {...p, animateForSelection: false};
+							}
+							return {...p};
+						}),
+					}));
+					this.setState({diceNumber: data});
 				}
 			});
+			setIsRolling(false);
 		});
 
 		// Pawn Move Socket Event Listener
@@ -675,7 +680,7 @@ export default class Green extends Component {
 							if (p.color === GREEN) {
 								return {...p, score: data.score};
 							}
-							if (P.color === BLUE) {
+							if (p.color === BLUE) {
 								return {...p, score: data.score1};
 							}
 							return p;
@@ -688,7 +693,7 @@ export default class Green extends Component {
 							if (p.color === GREEN) {
 								return {...p, score: data.score1};
 							}
-							if (P.color === BLUE) {
+							if (p.color === BLUE) {
 								return {...p, score: data.score};
 							}
 							return p;
@@ -738,7 +743,7 @@ export default class Green extends Component {
 			game_id: gameId,
 			score: diceNumber,
 			position: piece.position[2],
-			pawn: piece.name === ONE ? 1 : piece.name === TWO ? 2 : piece.name === THREE ? 3 : piece.name === FOUR ? 4 : undefined,
+			pawn: piece.name,
 		};
 
 		socket.emit('pawnMove', data);

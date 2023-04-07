@@ -86,6 +86,7 @@ G[2] = [CELL_SIZE * 6.84, CELL_SIZE * 1.6, 'G2'];
 G[3] = [CELL_SIZE * 6.84, CELL_SIZE * 2.5, 'G3'];
 G[4] = [CELL_SIZE * 6.84, CELL_SIZE * 3.5, 'G4'];
 G[5] = [CELL_SIZE * 6.84, CELL_SIZE * 4.45, 'G5'];
+G[6] = [CELL_SIZE * 6.84, CELL_SIZE * 5.45, 'G6'];
 
 export const B = [];
 B[1] = [CELL_SIZE * 6.84, CELL_SIZE * 12.5, 'B1'];
@@ -93,3 +94,4 @@ B[2] = [CELL_SIZE * 6.84, CELL_SIZE * 11.6, 'B2'];
 B[3] = [CELL_SIZE * 6.84, CELL_SIZE * 10.63, 'B3'];
 B[4] = [CELL_SIZE * 6.84, CELL_SIZE * 9.73, 'B4'];
 B[5] = [CELL_SIZE * 6.84, CELL_SIZE * 8.75, 'B5'];
+B[6] = [CELL_SIZE * 6.84, CELL_SIZE * 7.75, 'B6'];

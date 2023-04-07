@@ -680,7 +680,7 @@ export default class GamePure extends React.PureComponent {
 				<StatusBar translucent backgroundColor={'#ffffff00'} />
 				<Popup color={'#fff'} title={this.state.resultData.title} visible={this.state.resultPopup} bg={this.state.resultData.color}>
 					<Text style={{color: '#fff', fontSize: 18, textAlign: 'center'}}>{this.state.resultData.message}</Text>
-					<Button mode='contained' color={'#FFD101'} style={{alignSelf: 'center', marginTop: '5%'}} onPress={() => this.props.navigation.navigate('Home')}>
+					<Button mode="contained" color={'#FFD101'} style={{alignSelf: 'center', marginTop: '5%'}} onPress={() => this.props.navigation.navigate('Home')}>
 						Exit
 					</Button>
 				</Popup>
@@ -692,7 +692,7 @@ export default class GamePure extends React.PureComponent {
 						<Text style={{color: '#fff'}}>{this.props.route.params.gameId}</Text>
 					</View>
 					<TouchableOpacity activeOpacity={0.7} onPress={() => this.props.navigation.navigate('Settings')} style={styles.buttonContainer}>
-						<Icon name='gear' type='evilicon' color={'#fff'} />
+						<Icon name="gear" type="evilicon" color={'#fff'} />
 					</TouchableOpacity>
 					<View
 						style={[
@@ -740,7 +740,7 @@ export default class GamePure extends React.PureComponent {
 									? '#4ffa3c'
 									: '#fff'
 							}
-							type='material-community'
+							type="material-community"
 							size={20}
 						/>
 						<Text
@@ -814,7 +814,7 @@ export default class GamePure extends React.PureComponent {
 					timerKey={this?.state?.key}
 					isWaitingForRollDice={this?.state?.isWaitingForRollDice}
 				/>
-				<IconButton icon='refresh' color={c.blue} style={{backgroundColor: '#fff', position: 'absolute', bottom: '3%'}} onPress={this.onRefresh} />
+				<IconButton icon="refresh" color={c.blue} style={{backgroundColor: '#fff', position: 'absolute', bottom: '3%'}} onPress={this.onRefresh} />
 			</ImageBackground>
 		);
 	}

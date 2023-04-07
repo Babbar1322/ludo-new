@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert, StatusBar, Text, ToastAndroid, View, ImageBackground, BackHandler, TouchableOpacity, Vibration, AppState} from 'react-native';
+import {Alert, StatusBar, Text, ToastAndroid, View, ImageBackground, BackHandler, TouchableOpacity, Vibration} from 'react-native';
 import io from 'socket.io-client';
 import {Button, IconButton} from 'react-native-paper';
 import {BLUE, BOTTOM_VERTICAL, FINISHED, FOUR, GREEN, ONE, P22, P35, P48, P9, RED, SOCKET_API, THREE, TOP_VERTICAL, TWO, YELLOW} from '../Game/Utils/constants';
@@ -666,7 +666,7 @@ export default class GameCopy extends React.PureComponent {
 				<StatusBar translucent backgroundColor={'#ffffff00'} />
 				<Popup color={'#fff'} title={this.state.resultData.title} visible={this.state.resultPopup} bg={this.state.resultData.color}>
 					<Text style={{color: '#fff', fontSize: 18, textAlign: 'center'}}>{this.state.resultData.message}</Text>
-					<Button mode='contained' color={'#FFD101'} style={{alignSelf: 'center', marginTop: '5%'}} onPress={() => this.props.navigation.navigate('Home')}>
+					<Button mode="contained" color={'#FFD101'} style={{alignSelf: 'center', marginTop: '5%'}} onPress={() => this.props.navigation.navigate('Home')}>
 						Exit
 					</Button>
 				</Popup>
@@ -678,7 +678,7 @@ export default class GameCopy extends React.PureComponent {
 						<Text style={{color: '#fff'}}>{this.props.route.params.gameId}</Text>
 					</View>
 					<TouchableOpacity style={styles.buttonContainer} activeOpacity={0.7} onPress={() => this.props.navigation.navigate('Settings')}>
-						<Icon name='gear' type='evilicon' color={'#fff'} />
+						<Icon name="gear" type="evilicon" color={'#fff'} />
 					</TouchableOpacity>
 					<View
 						style={[
@@ -726,7 +726,7 @@ export default class GameCopy extends React.PureComponent {
 									? '#4ffa3c'
 									: '#fff'
 							}
-							type='material-community'
+							type="material-community"
 							size={20}
 						/>
 						<Text
@@ -805,7 +805,7 @@ export default class GameCopy extends React.PureComponent {
 					currentUser={GREEN}
 					isWaitingForRollDice={this.state.isWaitingForRollDice}
 				/>
-				<IconButton icon='refresh' color={c.blue} style={{backgroundColor: '#fff', position: 'absolute', bottom: '3%'}} onPress={this.onRefresh} />
+				<IconButton icon="refresh" color={c.blue} style={{backgroundColor: '#fff', position: 'absolute', bottom: '3%'}} onPress={this.onRefresh} />
 				{/* <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', position: 'absolute', top: '20%'}}>
 					<TouchableOpacity style={{backgroundColor: 'white', padding: 10, margin: 10}} onPress={() => this.rollDice(1)}>
 						<Text>1</Text>

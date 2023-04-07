@@ -1,631 +1,532 @@
-import React, {useEffect, useLayoutEffect, useState, useRef} from 'react';
-import {View, Text, ImageBackground, StatusBar, ToastAndroid, BackHandler, Alert} from 'react-native';
-import io from 'socket.io-client';
+import React, {useEffect, useState, useRef} from 'react';
+import {ImageBackground, StatusBar, Text, ToastAndroid, Vibration, View} from 'react-native';
+import socket from '../Game/Components/Socket';
 
-// Components
-import VerticalCellsContainer from '../Game/Components/VerticalCellsContainer';
-import HorizontalCellsContainer from '../Game/Components/HorizontalCellsContainer';
-import PlayerBox from '../Game/Components/PlayerBox';
-import Dice from '../Game/Components/Dice';
-
-// Constants
-import {c} from '../Game/Utils/colors';
-import styles from '../Game/Styles/styles';
-import {P22, P35, P48, P9, SOCKET_API} from '../Game/Utils/constants';
-import {BLUE, BOTTOM_VERTICAL, FOUR, GREEN, HOME, ONE, RED, THREE, TOP_VERTICAL, TWO, YELLOW, FINISHED} from '../Game/Utils/constants';
-
-// Assets
+import {BLUE, FINISHED, FOUR, GREEN, ONE, RED, THREE, TWO, YELLOW} from '../Game/Utils/constants';
+import {B, Constants, G, P} from '../Game/Utils/positions2';
 import BG from '../Game/Assets/Backgrounds/GridBG.png';
-import {useSelector, useDispatch} from 'react-redux';
-import {selectUser} from '../Redux/Slices/AuthSlice';
+import styles from '../Game/Styles/styles';
+
+import VerticalCellContainer from '../Game/Components/VerticalCellsContainer';
+import HorizontalCellContainer from '../Game/Components/HorizontalCellsContainer';
+import Center from '../Game/Components/Center';
+import PlayerBox from '../Game/Components/PlayerBox';
+import Piece from '../Game/Components/Piece';
+import Dice from '../Game/Components/Dice';
+import TopRow from '../Game/Components/TopRow';
+
+import {CutAudio, DiceAudio, FinishAudio, LoseAudio, SafeAudio, WinAudio} from '../Game/Components/Sounds';
 import Popup from '../Components/Popup';
 import {Button} from 'react-native-paper';
-import {selectMoves, selectScore, selectScore2, selectTurn, setMoves, setScore, setTurn, setDiceNumber} from '../Redux/Slices/GameSlice';
-import Sound from 'react-native-sound';
 
-const socket = io(SOCKET_API);
-
-const stepAudio = new Sound('step.wav', Sound.MAIN_BUNDLE, error => {
-	if (error) {
-		console.log('Failed To Load Step Audio', error);
-		return;
-	}
-});
-const diceAudio = new Sound('dice.mp3', Sound.MAIN_BUNDLE, error => {
-	if (error) {
-		console.log('Failed To Load Dice Audio', error);
-		return;
-	}
-});
-const safeAudio = new Sound('safe.wav', Sound.MAIN_BUNDLE, error => {
-	if (error) {
-		console.log('Failed To Load Safe Audio', error);
-		return;
-	}
-});
-const cutAudio = new Sound('cut.wav', Sound.MAIN_BUNDLE, error => {
-	if (error) {
-		console.log('Failed To Load Cut Audio', error);
-		return;
-	}
-});
-const finishAudio = new Sound('finish.wav', Sound.MAIN_BUNDLE, error => {
-	if (error) {
-		console.log('Failed To Load Finish Audio', error);
-		return;
-	}
-});
-const winAudio = new Sound('win.wav', Sound.MAIN_BUNDLE, error => {
-	if (error) {
-		console.log('Failed To Load Win Audio', error);
-		return;
-	}
-});
-const loseAudio = new Sound('lose.wav', Sound.MAIN_BUNDLE, error => {
-	if (error) {
-		console.log('Failed To Load Lose Audio', error);
-		return;
-	}
-});
-export default function Game2({route, navigation}) {
-	const {player1, player2, player3, player4, gameId, insertId, pawn, pawn2, bet} = route.params;
-
-	const user = useSelector(selectUser);
-
-	const roomId = '' + player1?.id;
-
-	const dispatch = useDispatch();
-	const moves = useSelector(selectMoves);
-	const turn = useSelector(selectTurn);
-	const score = useSelector(selectScore);
-	const score2 = useSelector(selectScore2);
-
-	const red = useRef(initPlayer(RED, c.red, player3, [{}, {}, {}, {}]));
-	const green = useRef(initPlayer(GREEN, c.green, player2, pawn));
-	const blue = useRef(initPlayer(BLUE, c.blue, player1, pawn2));
-	const yellow = useRef(initPlayer(YELLOW, c.yellow, player4, [{}, {}, {}, {}]));
-	const [disable, setDisable] = useState(false);
-
-	const [resultPopup, setResultPopup] = useState(false);
-	const [resultData, setResultData] = useState({});
-
-	const [isRolling, setIsRolling] = useState(false);
-	const [opponentDice, setOpponentDice] = useState(0);
-
-	const [animateForSelection, setAnimateForSelection] = useState(false);
-	const [isWaitingForRollDice, setIsWaitingForRollDice] = useState(true);
-
-	const [prevData, setPrevData] = useState('');
-	const pawnDisable = useRef(false);
-
-	const prevPos = useRef({});
-	const [testState, setTestState] = useState(true);
-	const [key, setKey] = useState(0);
+export default function Game({route, navigation}) {
+	const {player1, player2, gameId, user, bet, insertId} = route.params;
+	const players = useRef([
+		{
+			color: BLUE,
+			score: 0,
+			user: player1,
+		},
+		{
+			color: GREEN,
+			score: 0,
+			user: player2,
+		},
+		{
+			color: RED,
+			score: 0,
+			user: {},
+		},
+		{
+			color: YELLOW,
+			score: 0,
+			user: {},
+		},
+	]);
+	const pieces = useRef([
+		{
+			name: ONE,
+			color: BLUE,
+			animateForSelection: false,
+			position: P[1],
+			score: 0,
+		},
+		{
+			name: TWO,
+			color: BLUE,
+			animateForSelection: false,
+			position: P[1],
+			score: 0,
+		},
+		{
+			name: THREE,
+			color: BLUE,
+			animateForSelection: false,
+			position: P[1],
+			score: 0,
+		},
+		{
+			name: FOUR,
+			color: BLUE,
+			animateForSelection: false,
+			position: P[1],
+			score: 0,
+		},
+		{
+			name: ONE,
+			color: GREEN,
+			animateForSelection: false,
+			position: P[27],
+			score: 0,
+		},
+		{
+			name: TWO,
+			color: GREEN,
+			animateForSelection: false,
+			position: P[27],
+			score: 0,
+		},
+		{
+			name: THREE,
+			color: GREEN,
+			animateForSelection: false,
+			position: P[27],
+			score: 0,
+		},
+		{
+			name: FOUR,
+			color: GREEN,
+			animateForSelection: false,
+			position: P[27],
+			score: 0,
+		},
+	]);
+	const turn = useRef(BLUE);
+	const diceNumber = useRef(0);
+	const opponentDice = useRef(0);
+	const isRolling = useRef(false);
+	// const [isWaitingForRollDice, setIsWaitingForRollDice] = useState(true);
+	const isWaitingForRollDice = useRef(true);
+	const [update, setUpdate] = useState(true);
+	const [ping, setPing] = useState(0);
+	const [popupData, setPopupData] = useState({
+		show: false,
+		title: '',
+		message: '',
+		bg: '',
+	});
 	const [timerRunning, setTimerRunning] = useState(true);
 
-	useLayoutEffect(() => {
-		dispatch(setScore({score: 0, score2: 0}));
-		socket.emit('createRoom', roomId);
+	const disableInput = useRef(false);
+	const pingTime = useRef(0);
+	const timerKey = useRef(0);
 
-		socket.connect();
-		return () => {
-			socket.off('connect');
-			socket.off('createRoom');
-			socket.disconnect();
-		};
-	}, []);
+	const roomId = '' + player1.id;
 
-	useEffect(() => {
-		socket.on('diceRoll', data => {
-			setAnimateForSelection(true);
-			// setTimeout(() => {
-			if (turn === BLUE) {
-				setOpponentDice(data);
-				diceAudio.play();
-			} else {
-				pawnDisable.current = false;
-				dispatch(setMoves(data));
-				dispatch(setDiceNumber(data));
-				setIsRolling(false);
-				setIsWaitingForRollDice(false);
-			}
-			setIsRolling(false);
-			// }, 100);
-			if (playerHasUnfinishedPieces(green.current).length === 1 && turn === GREEN) {
-				movePieceByPosition(playerHasUnfinishedPieces(green.current)[0], data);
-			}
+	const updateState = () => {
+		setUpdate(prev => !prev);
+	};
+
+	const isMovePossibleForPiece = piece => {
+		const position = piece.position[2];
+		let isMovePossible = false;
+		let positionCheckFor = Number(position.substring(1, position.length));
+		let positionArea = position.substring(0, 1);
+		let possiblePosition = diceNumber.current + positionCheckFor;
+		if ((positionArea === 'B' || positionArea === 'G') && possiblePosition > 6) {
+			isMovePossible = false;
+		} else {
+			isMovePossible = true;
+		}
+		return isMovePossible;
+	};
+
+	const checkAutoMove = move => {
+		const availablePieces = pieces.current.filter(piece => Number(piece.score) + move <= 56 && piece.color === GREEN);
+		if (availablePieces.length === 1) {
+			onPieceTouch(availablePieces[0]);
+		} else if (availablePieces.length <= 0) {
+			onPieceTouch(pieces[0]);
+		}
+	};
+
+	const rollDice = () => {
+		if (!isWaitingForRollDice.current) {
+			return;
+		}
+		isRolling.current = true;
+		// const randomNumber = Math.floor(Math.random() * (6 - 1 + 1)) + 1;
+		updateState();
+		DiceAudio.play();
+		socket.emit('diceRoll', {
+			room_id: roomId,
+			user_id: user.id,
 		});
+	};
 
-		return () => {
-			socket.off('diceRoll');
-		};
-	}, [turn]);
+	const onPieceTouch = async piece => {
+		if (!diceNumber.current || turn.current !== GREEN || piece.color !== GREEN || isWaitingForRollDice.current || disableInput.current) {
+			// console.log(diceNumber.current, turn.current, piece.color, isWaitingForRollDice.current, disableInput.current);
+			return;
+		}
+		disableInput.current = true;
+		updateState();
+		socket.emit('pawnMove', {
+			room_id: roomId,
+			game_id: gameId,
+			user_id: user.id,
+			pawn: piece.name,
+			score: diceNumber.current,
+		});
+	};
 
-	useEffect(() => {
-		console.log(testState);
-		socket.emit('joining', {
-			room_id: player1.id + '',
+	const movePiece = async (piece, startPosition, endPosition, cell) => {
+		for (let i = startPosition; i <= endPosition; i++) {
+			if (startPosition != i) {
+				await new Promise(resolve => {
+					setTimeout(() => {
+						// console.log('Inside the loop');
+						piece.position = cell[i];
+						resolve();
+					}, 150);
+				});
+				updateState();
+			} else {
+				piece.position = cell[i];
+				updateState();
+			}
+			if (cell[i][2] === 'B6' || cell[i][2] === 'G6') {
+				FinishAudio.play();
+			}
+			if (i === endPosition && (i === 9 || i === 22 || i === 35 || i === 48)) {
+				console.log('Safe', endPosition);
+				SafeAudio.play();
+			}
+			if (i >= endPosition) {
+				return 'Completed';
+			}
+		}
+	};
+	const cutPiece = piece => {
+		if (piece.color === BLUE) {
+			piece.position = P[1];
+		} else {
+			piece.position = P[27];
+		}
+		CutAudio.play();
+		Vibration.vibrate(300);
+		piece.score = 0;
+		updateState();
+	};
+
+	const handleUnsubscribe = () => {
+		socket.emit('exit', {
+			room_id: roomId,
+			id: insertId,
+			user_id: user.id,
 			game_id: gameId,
 		});
+	};
 
-		socket.on('roomMessage', data => {
-			if (data.typee === 'joining') {
-				setTurn(data.turn);
-			}
+	useEffect(() => {
+		socket.emit('pong');
+		// socket.emit('clearAllRooms', roomId);
+		// socket.on('clearSuccess', data => {
+		socket.emit('createRoom', roomId);
+		socket.emit('joining', {
+			room_id: roomId,
+			game_id: gameId,
 		});
-
-		socket.on('pawnMove', async data => {
-			// console.log(data, 'Green Screen');
+		// });
+		socket.on('ping', data => {
+			// console.log('Ping Game 2', data);
+			setPing(Date.now() - pingTime.current);
+			setTimeout(() => {
+				socket.emit('pong', 'game2');
+				pingTime.current = Date.now();
+			}, 500);
+		});
+		socket.on('diceRoll', data => {
+			// console.log('Dice Roll Data Game 2', data);
+			if (turn.current === GREEN) {
+				diceNumber.current = data;
+				pieces.current.map(piece => {
+					if (piece.color === GREEN && isMovePossibleForPiece(piece)) {
+						piece.animateForSelection = true;
+					} else {
+						piece.animateForSelection = false;
+					}
+				});
+				isWaitingForRollDice.current = false;
+				isRolling.current = false;
+				disableInput.current = false;
+				checkAutoMove(data);
+				updateState();
+			} else {
+				DiceAudio.play();
+				opponentDice.current = data;
+				pieces.current.map(piece => {
+					piece.animateForSelection = false;
+				});
+				isWaitingForRollDice.current = false;
+				disableInput.current = true;
+			}
+			updateState();
+		});
+		socket.on('pawnMove', data => {
 			if (data.type === 'RETRY') {
 				ToastAndroid.show('Retry', ToastAndroid.LONG);
-				setPrevData('');
-				setTimerRunning(false);
-				setAnimateForSelection(true);
-				pawnDisable.current = false;
+				disableInput.current = false;
 				return;
 			}
-			if (data.type === 'SUCCESS' || data.type === 'REFRESH') {
-				if (data.type === 'REFRESH') {
-					ToastAndroid.show('Refreshing Done!', ToastAndroid.LONG);
-				}
+			if (data.type === 'SUCCESS') {
 				data.opp_position.forEach(async item => {
-					let player = item.color === 'blue' ? blue.current : green.current;
+					const player = players.current.find(player => player.color === item.color);
+					const piece = pieces.current.find(piece => piece.name === item.pawn && piece.color === player.color);
 
-					let piece =
-						item.pawn === 1
-							? player.pieces.one
-							: item.pawn === 2
-							? player.pieces.two
-							: item.pawn === 3
-							? player.pieces.three
-							: item.pawn === 4
-							? player.pieces.four
-							: undefined;
+					piece.score = item.score;
 
-					if (piece.name === prevPos.current.name && piece.color === 'green' && data.user_id === user.id) {
-						// setLatency(Date.now() - pawnMoveTime.current);
-						// This Condition is only for Second User // This Will Move Pawn (Piece) From P52 to P1 //
+					if (piece.color === GREEN && data.user_id === user.id) {
+						const prevPos = piece.position[2];
 						if (data.pawn_score > 25 && data.prev_score < 26) {
+							console.log('Green Screen 1 if');
 							let stepP = 25 - data.prev_score;
 							let stepB = data.pawn_score - 25;
 							if (stepP > 0) {
-								let prevPosition = parseInt(prevPos.current.position.substring(1, prevPos.current.position.length));
+								console.log('Green Screen 1 if --- 1 if');
+								let prevPosition = Number(prevPos.substring(1, prevPos.length));
 								let newPosition = prevPosition + stepP;
-								await new Promise((resolve, reject) => {
-									resolve(movePawnByStep(prevPosition, newPosition, piece, 'P', null, item.position, data.sound));
-								});
-							} else if (stepB > 0) {
-								let newPosition = stepB;
-								await new Promise((resolve, reject) => {
-									resolve(movePawnByStep(0, newPosition, piece, 'P'));
+								await movePiece(piece, prevPosition, newPosition, P).then(res => {
+									if (res === 'Completed' && stepB > 0) {
+										console.log('Green Screen 1 if --- 1 if --- 1 if');
+										setTimeout(() => {
+											movePiece(piece, 1, stepB, P);
+										}, 150);
+									}
 								});
 							}
+							if (!stepP > 0 && stepB > 0) {
+								console.log('Green Screen 1 if --- 1 if --- 2 if');
+								setTimeout(() => {
+									movePiece(piece, 1, stepB, P);
+								}, 150);
+							}
 						} else if (data.pawn_score < 51) {
-							let prevPosition = parseInt(prevPos.current.position.substring(1, prevPos.current.position.length));
-							let newPosition = parseInt(item.position.substring(1, item.position.length));
-							await movePawnByStep(prevPosition, newPosition, piece, 'P', null, null, data.sound);
+							console.log('Green Screen 2 else if');
+							let prevPosition = Number(prevPos.substring(1, prevPos.length));
+							let newPosition = Number(item.position.substring(1, item.position.length));
+							await movePiece(piece, prevPosition, newPosition, P);
 						} else if (data.prev_score < 51 && data.pawn_score > 50) {
+							console.log('Green Screen 3 else if');
 							let stepP = 50 - data.prev_score;
 							let stepB = data.pawn_score - 50;
 							if (stepP > 0) {
-								let prevPosition = parseInt(prevPos.current.position.substring(1, prevPos.current.position.length));
-								let newPosition = prevPosition + 1;
-								await movePawnByStep(prevPosition, newPosition, piece, 'P', null, null, data.sound);
+								console.log('Green Screen 3 else if --- 1 if');
+								let prevPosition = Number(prevPos.substring(1, prevPos.length));
+								let newPosition = prevPosition + stepP;
+								await movePiece(piece, prevPosition, newPosition, P).then(res => {
+									if (res === 'Completed' && stepB > 0) {
+										console.log('Green Screen 3 else if --- 1 if --- 1 if');
+										setTimeout(() => {
+											movePiece(piece, 1, stepB, G);
+										}, 150);
+									}
+								});
 							}
-							if (stepB > 0) {
+							if (!stepP > 0 && stepB > 0) {
+								console.log('Green Screen 3 else if --- 2 if');
 								let newPosition = stepB;
 								if (newPosition === 6) {
-									await movePawnByStep(1, 5, piece, 'G', null, item.position);
+									await movePiece(piece, 1, 6, G);
 								} else {
-									await movePawnByStep(0, newPosition, piece, 'G', null, item.position);
+									await movePiece(piece, 1, newPosition, G);
 								}
 							}
 						} else if (data.prev_score > 50 && data.pawn_score > 50) {
-							let prevPosition = parseInt(prevPos.current.position.substring(1, prevPos.current.position.length));
-							let newPosition = parseInt(item.position.substring(1, item.position.length));
-							if (item.position === 'FINISHED') {
-								await movePawn(piece, item.position);
+							console.log('Green Screen 4 else if');
+							let prevPosition = Number(prevPos.substring(1, prevPos.length));
+							let newPosition = Number(item.position.substring(1, item.position.length));
+							if (item.position === FINISHED) {
+								await movePiece(piece, prevPosition, 6, G);
 							} else {
-								await movePawnByStep(prevPosition, newPosition, piece, 'G');
+								await movePiece(piece, prevPosition, newPosition, G);
 							}
 						}
-					} else {
-						movePawn(piece, item.position, data.sound);
+					} else if (piece.position !== item.position && item.color !== GREEN) {
+						///   Opposite   ///
+						let prevPos = piece.position[2];
+						if (data.sound === 'pawncut' && item.score == 0) {
+							cutPiece(piece);
+						} else if (data.pawn_score < 51) {
+							console.log('Green Screen for Blue 1 if');
+							let prevPosition = Number(prevPos.substring(1, prevPos.length));
+							let newPosition = Number(item.position.substring(1, item.position.length));
+							await movePiece(piece, prevPosition, newPosition, P);
+						} else if (data.prev_score < 51 && data.pawn_score > 50) {
+							console.log('Green Screen for Blue 2 else if');
+							let stepP = 50 - data.prev_score;
+							let stepB = data.pawn_score - 50;
+							if (stepP > 0) {
+								console.log('Green Screen for Blue 2 else if --- 1 if');
+								let prevPosition = Number(prevPos.substring(1, prevPos.length));
+								let newPosition = prevPosition + stepP;
+								await movePiece(piece, prevPosition, newPosition, P).then(res => {
+									if (res === 'Completed' && stepB > 0) {
+										console.log('Green Screen for Blue 2 else if --- 1 if --- 1 if');
+										setTimeout(async () => {
+											await movePiece(piece, 1, stepB, B);
+										}, 150);
+									}
+								});
+							}
+							if (!stepP > 0 && stepB > 0) {
+								console.log('Green Screen for Blue 2 else if --- 2 if');
+								let newPosition = stepB;
+								// await movePiece(piece, 1, newPosition, B);
+								if (item.position === FINISHED) {
+									await movePiece(piece, 1, 6, B);
+								} else {
+									await movePiece(piece, 1, newPosition, B);
+								}
+							}
+						} else if (data.prev_score > 50 && data.pawn_score > 50) {
+							console.log('Green Screen for Blue 3 else if');
+							let prevPosition = Number(prevPos.substring(1, prevPos.length));
+							let newPosition = Number(item.position.substring(1, item.position.length));
+							// await movePiece(piece, prevPosition, newPosition, B);
+							if (item.position === FINISHED) {
+								await movePiece(piece, prevPosition, 6, B);
+							} else {
+								await movePiece(piece, prevPosition, newPosition, B);
+							}
+						}
 					}
+					if (data.sound === 'pawncut' && item.score == 0) {
+						cutPiece(piece);
+					}
+					// if (data.sound === 'pawncut' && item.color === GREEN && data.user_id !== user.id) {
+					// 	cutPiece(piece);
+					// } else if (data.sound === 'pawncut' && item.color === BLUE && data.user_id === user.id) {
+					// 	cutPiece(piece);
+					// }
 				});
-				setDisable(false);
-			}
-			if (data.user_id === user.id) {
-				dispatch(setScore({score: data.score, score2: data.score1}));
-				setTestState(prev => !prev);
-			} else {
-				dispatch(setScore({score: data.score1, score2: data.score}));
-				setTestState(prev => !prev);
-			}
-			if (data.turn === user.id) {
-				dispatch(setTurn(GREEN));
-				setOpponentDice(0);
-				setKey(prev => prev + 1);
-				setTimerRunning(true);
-				setIsWaitingForRollDice(true);
-			} else {
-				dispatch(setTurn(BLUE));
-				setOpponentDice(0);
-				setKey(prev => prev + 1);
-				setTimerRunning(true);
-			}
-			setDisable(false);
-
-			if (data.type === 'FAILED') {
-				setPrevData({});
 				if (data.turn === user.id) {
-					dispatch(setTurn(GREEN));
-					setOpponentDice(0);
-					setKey(prev => prev + 1);
-					setTimerRunning(true);
-					setTestState(prev => (prev === false ? true : false));
-					setIsWaitingForRollDice(true);
+					turn.current = GREEN;
+					isWaitingForRollDice.current = true;
+					opponentDice.current = 0;
+					timerKey.current += 1;
 				} else {
-					dispatch(setTurn(BLUE));
-					setOpponentDice(0);
-					setKey(prev => prev + 1);
-					setTimerRunning(true);
+					turn.current = BLUE;
+					opponentDice.current = 0;
+					timerKey.current += 1;
 				}
-				setDisable(false);
+				pieces.current.map(item => {
+					item.animateForSelection = false;
+				});
+				updateState();
+				if (data.user_id === user.id) {
+					players.current.map(player => {
+						if (player.color === BLUE) {
+							player.score = data.score1;
+						}
+						if (player.color === GREEN) {
+							player.score = data.score;
+						}
+					});
+				} else {
+					players.current.map(player => {
+						if (player.color === BLUE) {
+							player.score = data.score;
+						}
+						if (player.color === GREEN) {
+							player.score = data.score1;
+						}
+					});
+				}
+				updateState();
+			}
+			if (data.type === 'FAILED') {
+				if (data.turn === user.id) {
+					turn.current = BLUE;
+					isWaitingForRollDice.current = true;
+					opponentDice.current = 0;
+					timerKey.current += 1;
+					updateState();
+					// this.setState(prev => ({turn: BLUE, opponentDice: 0, key: prev.key + 1, timerRunning: true, isWaitingForRollDice: true, prevData: {}, disable: false}));
+				} else {
+					turn.current = GREEN;
+					opponentDice.current = 0;
+					timerKey.current += 1;
+					updateState();
+					// this.setState(prev => ({turn: GREEN, setOpponentDice: 0, key: prev.key + 1, timerRunning: true, prevData: {}, disable: false}));
+				}
 			}
 
 			if (data.type === 'WIN') {
-				if (data.game_id != gameId) {
-					return;
-				}
+				setTimerRunning(false);
 				if (data.game_status.user_id === user.id) {
-					setResultData({title: 'Congratulations', message: 'You are Winner!', color: '#00ff00'});
-					setResultPopup(true);
-					winAudio.play();
+					setPopupData({show: true, title: 'Congratulations', message: 'You are Winner!', bg: '#00ff00'});
+					setTimerRunning(false);
+					// this.setState({resultData: {title: 'Congratulations', message: 'You are Winner!', color: '#00ff00'}, resultPopup: true, opponentDice: 0});
+					WinAudio.play();
 				} else {
-					setResultData({title: 'Sorry', message: 'Try Next Time!', color: '#ff0000'});
-					setResultPopup(true);
-					loseAudio.play();
+					setPopupData({show: true, title: 'Sorry', message: 'Try Next Time!', bg: '#ff0000'});
+					setTimerRunning(false);
+					// this.setState({resultData: {title: 'Sorry', message: 'Try Next Time!', color: '#ff0000'}, resultPopup: true, opponentDice: 0});
+					LoseAudio.play();
 				}
-				setOpponentDice(0);
 			}
-
 			if (data.type === 'EXIT') {
-				setTestState(prev => !prev);
 				navigation.navigate('Home');
 			}
-			setTestState(prev => !prev);
+			updateState();
 		});
-
-		BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-
+		console.log(update);
 		return () => {
-			socket.off('pawnMove');
-			socket.disconnect();
-			dispatch(setTurn(BLUE));
-			BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+			socket.off();
 		};
 	}, []);
-
-	async function getNumber() {
-		try {
-			if (gameId) {
-				diceRollTime.current = Date.now();
-				socket.emit('diceRoll', {
-					room_id: roomId,
-					game_id: gameId,
-					user_id: user.id,
-				});
-			}
-		} catch (err) {
-			console.log('Get Number', err);
-		}
-	}
-
-	const handleBackPress = () => {
-		Alert.alert('Hold on!', 'Are you sure you want to go back?', [
-			{
-				text: 'Cancel',
-				onPress: () => null,
-				style: 'cancel',
-			},
-			{text: 'Exit', onPress: handleUnsubscribe},
-		]);
-		return true;
-	};
-
-	async function handleUnsubscribe() {
-		try {
-			// console.log({
-			// 	room_id: roomId,
-			// 	id: insertId,
-			// 	user_id: user.id,
-			// 	game_id: gameId,
-			// });
-			socket.emit('exit', {
-				room_id: roomId,
-				id: insertId,
-				user_id: user.id,
-				game_id: gameId,
-			});
-		} catch (err) {
-			console.log('Unsubscribe Error -', err);
-		}
-	}
-
-	async function rollDice() {
-		if (!isWaitingForRollDice || disable) {
-			return;
-		}
-		setIsWaitingForRollDice(false);
-		getNumber();
-		diceAudio.play();
-		setIsRolling(true);
-	}
-
-	function initPlayer(playerType, color, info, pawns) {
-		return {
-			pieces: initPieces(playerType, pawns),
-			color: color,
-			player: playerType,
-			...info,
-		};
-	}
-
-	function initPieces(playerColor, pawns) {
-		let time = new Date().getTime();
-		return {
-			one: {
-				position: pawns[0].position,
-				name: ONE,
-				color: playerColor,
-				updateTime: time,
-			},
-			two: {
-				position: pawns[1].position,
-				name: TWO,
-				color: playerColor,
-				updateTime: time,
-			},
-			three: {
-				position: pawns[2].position,
-				name: THREE,
-				color: playerColor,
-				updateTime: time,
-			},
-			four: {
-				position: pawns[3].position,
-				name: FOUR,
-				color: playerColor,
-				updateTime: time,
-			},
-		};
-	}
-
-	async function movePawnByStep(prevPosition, newPostion, piece, areaIndicator, finished = null, mv = null, sound) {
-		// console.log('Prev Position =', prevPosition, 'New Position =', newPostion, 'Piece =', piece, 'Cell Area =', areaIndicator, '\n');
-		piece.position = areaIndicator + ++prevPosition;
-		piece.updateTime = new Date().getTime();
-		setTestState(prev => !prev);
-		stepAudio.play();
-		if (
-			(prevPosition === 48 && newPostion === 48) ||
-			(prevPosition === 9 && newPostion === 9) ||
-			(prevPosition === 22 && newPostion === 22) ||
-			(prevPosition === 35 && newPostion === 35)
-		) {
-			safeAudio.play();
-		}
-		if (sound === 'pawncut') {
-			cutAudio.play();
-		}
-		const timeOut = setTimeout(async () => {
-			if (prevPosition < newPostion) {
-				await movePawnByStep(prevPosition, newPostion, piece, areaIndicator, finished, mv);
-				return;
-			} else {
-				if (mv !== null) {
-					piece.position = mv;
-					piece.updateTime = new Date().getTime();
-					setTestState(prev => !prev);
-					if (mv === FINISHED) {
-						finishAudio.play();
-					}
-				}
-				clearTimeout(timeOut);
-				prevPos.current = {};
-				return true;
-			}
-		}, 300);
-		prevPos.current = {};
-	}
-
-	async function movePawn(pawn, position, sound) {
-		pawn.position = position;
-		pawn.updateTime = new Date().getTime();
-		dispatch(setMoves(0));
-		setAnimateForSelection(false);
-		if (position === FINISHED) {
-			finishAudio.play();
-		}
-		if (position === P9 || position === P22 || position === P35 || position === P48) {
-			safeAudio.play();
-		}
-		if (sound === 'pawncut') {
-			cutAudio.play();
-		}
-	}
-
-	function movePieceByPosition(piece, move) {
-		if (piece.color !== GREEN || pawnDisable.current) {
-			return;
-		}
-		pawnDisable.current = true;
-		prevPos.current = piece;
-		if (!isWaitingForRollDice) {
-			const data = {
-				user_id: user.id,
-				room_id: roomId,
-				game_id: gameId,
-				score: move,
-				position: piece.position,
-				pawn: piece.name === ONE ? 1 : piece.name === TWO ? 2 : piece.name === THREE ? 3 : piece.name === FOUR ? 4 : undefined,
-			};
-			let newData = JSON.stringify(data);
-			if (prevData !== newData) {
-				setDisable(true);
-				setPrevData(newData);
-				socket.emit('pawnMove', data);
-				setAnimateForSelection(false);
-				setTimerRunning(false);
-			}
-		}
-	}
-
-	function onPieceSelection(piece) {
-		if (moves) {
-			movePieceByPosition(piece, moves);
-		}
-	}
-
-	function playerHasUnfinishedPieces(player) {
-		const {one, two, three, four} = player.pieces;
-		let countOfUnfinishedPieces = [];
-		one.position !== FINISHED ? countOfUnfinishedPieces.push(one) : undefined;
-		two.position !== FINISHED ? countOfUnfinishedPieces.push(two) : undefined;
-		three.position !== FINISHED ? countOfUnfinishedPieces.push(three) : undefined;
-		four.position !== FINISHED ? countOfUnfinishedPieces.push(four) : undefined;
-		return countOfUnfinishedPieces;
-	}
-
-	function getFinishedPieces(player) {
-		let finishedPieces = [];
-		player.pieces.one.position === 'FINISHED' ? finishedPieces.push(player.pieces.one) : undefined;
-		player.pieces.two.position === 'FINISHED' ? finishedPieces.push(player.pieces.two) : undefined;
-		player.pieces.three.position === 'FINISHED' ? finishedPieces.push(player.pieces.three) : undefined;
-		player.pieces.four.position === 'FINISHED' ? finishedPieces.push(player.pieces.four) : undefined;
-		return finishedPieces;
-	}
-
 	return (
 		<ImageBackground source={BG} style={styles.container}>
-			<StatusBar translucent backgroundColor={'#ffffff00'} />
-			<Popup color={'#fff'} title={resultData.title} visible={resultPopup} bg={resultData.color}>
-				<Text style={{color: '#fff', fontSize: 18, textAlign: 'center'}}>{resultData.message}</Text>
-				<Button mode='contained' color={'#FFD101'} style={{alignSelf: 'center', marginTop: '5%'}} onPress={() => navigation.navigate('Home')}>
+			<StatusBar translucent />
+			<Popup color={'#fff'} bg={popupData.bg} title={popupData.title} visible={popupData.show}>
+				<Text style={{color: '#fff', fontSize: 18, textAlign: 'center'}}>{popupData.message}</Text>
+				<Button mode="contained" color={'#FFD101'} style={{alignSelf: 'center', marginTop: '5%'}} onPress={() => navigation.navigate('Home')}>
 					Exit
 				</Button>
 			</Popup>
-			<View
-				style={{
-					flexDirection: 'row',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-					position: 'absolute',
-					top: StatusBar.currentHeight + 10,
-					width: '100%',
-					paddingHorizontal: '4%',
-				}}>
-				<Text style={{color: '#fff', fontWeight: 'bold', fontSize: 14}}>Prize: {bet}</Text>
-				<Text
-					style={{
-						fontSize: 18,
-						fontWeight: 'bold',
-						color: '#fff',
-					}}>
-					{gameId}
-				</Text>
-				{/* <View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<Icon
-						name={
-							latency > 1000
-								? 'wifi-strength-1'
-								: latency > 700
-								? 'wifi-strength-2'
-								: latency > 400
-								? 'wifi-strength-3'
-								: latency > 100
-								? 'wifi-strength-4'
-								: undefined
-						}
-						color={latency > 1000 ? '#fa3c3c' : latency > 700 ? '#fa953c' : latency > 400 ? '#faf03c' : latency > 100 ? '#4ffa3c' : '#fff'}
-						type='material-community'
-						size={20}
-					/>
-					<Text
-						style={{
-							fontSize: 14,
-							fontWeight: 'bold',
-							color: latency > 1000 ? '#fa3c3c' : latency > 700 ? '#fa953c' : latency > 400 ? '#faf03c' : latency > 100 ? '#4ffa3c' : '#fff',
-						}}>
-						{latency}ms
-					</Text>
-				</View> */}
-			</View>
-			{/* <Text
-				style={{
-					fontSize: 18,
-					fontWeight: 'bold',
-					position: 'absolute',
-					color: '#fff',
-					top: StatusBar.currentHeight + 10,
-				}}>
-				{gameId}
-			</Text> */}
-			{/* <View style={{position: 'absolute', top: StatusBar.currentHeight + 10, right: 10, flexDirection: 'row', alignItems: 'center'}}>
-				<Icon
-					name={
-						latency > 1000 ? 'wifi-strength-1' : latency > 700 ? 'wifi-strength-2' : latency > 400 ? 'wifi-strength-3' : latency > 100 ? 'wifi-strength-4' : undefined
-					}
-					color={latency > 1000 ? '#fa3c3c' : latency > 700 ? '#fa953c' : latency > 400 ? '#faf03c' : latency > 100 ? '#4ffa3c' : '#fff'}
-					type='material-community'
-					size={20}
-				/>
-				<Text
-					style={{
-						fontSize: 14,
-						fontWeight: 'bold',
-						color: latency > 1000 ? '#fa3c3c' : latency > 700 ? '#fa953c' : latency > 400 ? '#faf03c' : latency > 100 ? '#4ffa3c' : '#fff',
-					}}>
-					{latency}ms
-				</Text>
-			</View> */}
+			<TopRow ping={ping} bet={bet} gameId={gameId} openSettings={() => navigation.navigate('Settings')} />
 			<View style={styles.board}>
-				<View style={styles.playerSection}>
-					<PlayerBox player={red.current} currentUser={GREEN} />
-					<VerticalCellsContainer
-						position={TOP_VERTICAL}
-						game2
-						onPieceSelection={onPieceSelection}
-						pieces={{red: red.current, green: green.current, blue: blue.current, yellow: yellow.current}}
-						animateForSelection={animateForSelection}
+				{players.current.map((player, idx) => (
+					<PlayerBox score={player.score} diceNumber={opponentDice.current} turn={turn.current} currentUser={GREEN} player={player} key={idx} game2 />
+				))}
+				<VerticalCellContainer positions={'top'} game2 />
+				<VerticalCellContainer positions={'bottom'} game2 />
+				<HorizontalCellContainer positions={'left'} game2 />
+				<HorizontalCellContainer positions={'right'} game2 />
+				<Center game2 />
+				{pieces.current.map((piece, idx) => (
+					<Piece
+						name={piece.name}
+						currentUser={GREEN}
+						color={piece.color}
+						position={piece.position}
+						onTouch={() => onPieceTouch(piece)}
+						size={Constants.CELL_SIZE}
+						animateForSelection={piece.animateForSelection}
+						key={idx}
 					/>
-					<PlayerBox player={blue.current} score={score2} diceNumber={opponentDice} currentUser={GREEN} />
-				</View>
-				<HorizontalCellsContainer
-					pieces={{red: red.current, green: green.current, blue: blue.current, yellow: yellow.current}}
-					game2
-					animateForSelection={animateForSelection}
-					blueFinished={getFinishedPieces(blue.current)}
-					greenFinished={getFinishedPieces(green.current)}
-					onPieceSelection={onPieceSelection}
-				/>
-				<View style={styles.playerSection}>
-					<PlayerBox player={green.current} score={score} currentUser={GREEN} />
-					<VerticalCellsContainer
-						position={BOTTOM_VERTICAL}
-						game2
-						onPieceSelection={onPieceSelection}
-						pieces={{red: red.current, green: green.current, blue: blue.current, yellow: yellow.current}}
-						animateForSelection={animateForSelection}
-					/>
-					<PlayerBox player={yellow.current} currentUser={GREEN} />
-				</View>
+				))}
 			</View>
 			<Dice
+				currentUser={GREEN}
+				diceNumber={diceNumber.current}
+				isRolling={isRolling.current}
+				isWaitingForRollDice={isWaitingForRollDice.current}
 				onDiceRoll={rollDice}
+				turn={turn.current}
+				timerKey={timerKey.current}
 				timerRunning={timerRunning}
-				// onComplete={handleUnsubscribe}
 				onComplete={() => {
 					if (turn === GREEN) {
 						setTimeout(handleUnsubscribe, 5000);
@@ -633,10 +534,6 @@ export default function Game2({route, navigation}) {
 						setTimeout(handleUnsubscribe, 10000);
 					}
 				}}
-				timerKey={key}
-				isRolling={isRolling}
-				currentUser={GREEN}
-				isWaitingForRollDice={isWaitingForRollDice}
 			/>
 		</ImageBackground>
 	);

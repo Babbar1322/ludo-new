@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {View, Text, ImageBackground, Image, TouchableOpacity, ActivityIndicator, Alert} from 'react-native';
-import {Button, IconButton} from 'react-native-paper';
+import {IconButton} from 'react-native-paper';
 import axios from 'axios';
 import s from '../Config/Styles';
 import {api, c} from '../Config/Config';
@@ -8,7 +8,7 @@ import BG from '../Assets/Images/GridBG.png';
 import Logo from '../Assets/Images/Logo.png';
 import Coin from '../Assets/Images/Coin.png';
 import {useDispatch, useSelector} from 'react-redux';
-import {selectBalance, selectUser, setLogout} from '../Redux/Slices/AuthSlice';
+import {selectUser, setLogout} from '../Redux/Slices/AuthSlice';
 import {GAME_API} from '../Game/Utils/constants';
 import verifyDevice from '../Config/verifyDevice';
 import {Dropdown} from 'react-native-element-dropdown';
@@ -16,7 +16,6 @@ import BgMusic from '../Game/Components/BgMusic';
 
 export default function GameOptions({navigation}) {
 	const dispatch = useDispatch();
-	const balance = useSelector(selectBalance);
 	const [data, setData] = useState([]);
 	const [loading, setLoading] = useState(false);
 
@@ -47,6 +46,7 @@ export default function GameOptions({navigation}) {
 			// 	Alert.alert('Insufficiant Balance', 'Please Add Some Balance or Choose another package');
 			// 	return;
 			// }
+			console.log('handleChooseOption');
 			disable.current = true;
 			// console.log(GAME_API + 'add_users');
 			// const res = await fetch(GAME_API + 'add_users', {
@@ -62,13 +62,14 @@ export default function GameOptions({navigation}) {
 			// 		wallet_type: value,
 			// 	}),
 			// });
-			const res = await axios.post(GAME_API + 'add_users', {
+			console.log(GAME_API + 'add_users');
+			const res = await axios.post('http://66.228.48.56:4001/api/add_users', {
 				user_id: user.id,
 				package_id: package_id,
 				status: 0,
 				wallet_type: value,
 			});
-			// console.log(res);
+			console.log(res.data);
 			if (res.status === 200) {
 				// console.log(res.data);
 				BgMusic.pause();
@@ -76,7 +77,7 @@ export default function GameOptions({navigation}) {
 					? navigation.navigate('Matchmaking', {
 							insertId: res.data.id.insertId,
 					  })
-					: navigation.navigate('Green', {
+					: navigation.navigate('Game2', {
 							player1: {
 								id: res.data.user[0].id,
 								name: res.data.user[0].name,

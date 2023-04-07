@@ -177,7 +177,7 @@ export default function Home({navigation}) {
 				{sliderVisible && (
 					<View style={s.slider}>
 						<IconButton
-							icon='close'
+							icon="close"
 							style={s.closeBtn}
 							onPress={() => {
 								setSliderVisible(false);
@@ -209,18 +209,18 @@ export default function Home({navigation}) {
                                 }} /> */}
 					</View>
 				)}
-				<Popup icon='check' title={'Welcome, ' + user.name} visible={visible} color={c.white} onClose={() => setVisible(false)}>
+				<Popup icon="check" title={'Welcome, ' + user.name} visible={visible} color={c.white} onClose={() => setVisible(false)}>
 					<Text style={TS.WS}>Please Choose an Image for your avatar.</Text>
 					<View style={[s.row, s.justifyAround, {flexWrap: 'wrap'}]}>
 						{Array.from([Avatar1, Avatar2, Avatar3, Avatar4, Avatar5, Avatar6, Avatar7, Avatar8]).map(item => avatarSelect(item))}
 					</View>
-					<Button mode='contained' style={{marginVertical: '2%'}} color={c.green} onPress={handleAvatar}>
+					<Button mode="contained" style={{marginVertical: '2%'}} color={c.green} onPress={handleAvatar}>
 						Done
 					</Button>
 				</Popup>
-				<Modal transparent visible={loading} animationType='fade'>
+				<Modal transparent visible={loading} animationType="fade">
 					<View style={s.modalBg}>
-						<ActivityIndicator size='large' color={c.green} />
+						<ActivityIndicator size="large" color={c.green} />
 					</View>
 				</Modal>
 				<Header
@@ -233,12 +233,24 @@ export default function Home({navigation}) {
 					<Image source={Logo} style={s.logo} />
 
 					<View style={[s.row, s.justifyAround, {marginTop: '3%'}]}>
-						<HomeGrid onPress={() => navigation.navigate('GameOptions')} img={TwoPlayers} label='2 Players' />
-						<HomeGrid onPress={() => navigation.navigate('SocketTest')} img={Single} label='VS Computer' />
+						<HomeGrid onPress={() => navigation.navigate('GameOptions')} img={TwoPlayers} label="2 Players" />
+						<HomeGrid onPress={() => navigation.navigate('SocketTest')} img={Single} label="VS Computer" />
 					</View>
 					<View style={[s.row, s.justifyAround, {marginTop: '3%'}]}>
-						<HomeGrid onPress={() => ToastAndroid.show('Coming Soon...', ToastAndroid.LONG)} img={FourPlayers} label='4 Players' />
-						<HomeGrid img={Private} label='Private' onPress={() => ToastAndroid.show('Coming Soon...', ToastAndroid.LONG)} />
+						<HomeGrid
+							onPress={() =>
+								navigation.navigate('Game', {player1: {id: 155, name: 'Gursahb', avatar: 'Avatar1'}, player2: {id: 282, name: 'Ludo', avatar: 'Avatar3'}})
+							}
+							img={FourPlayers}
+							label="4 Players"
+						/>
+						<HomeGrid
+							img={Private}
+							label="Private"
+							onPress={() =>
+								navigation.navigate('Game2', {player1: {id: 155, name: 'Gursahb', avatar: 'Avatar1'}, player2: {id: 282, name: 'Ludo', avatar: 'Avatar3'}})
+							}
+						/>
 					</View>
 					<View style={[s.row, s.justifyBetween, {position: 'absolute', top: 0, left: 0, right: 0}]}>
 						<View style={s.alignCenter}>
@@ -275,7 +287,7 @@ export default function Home({navigation}) {
 					</View>
 				</View>
 				<TouchableOpacity style={{alignSelf: 'center'}} activeOpacity={0.7} onPress={() => Linking.openURL(zoomLink)}>
-					<ImageBackground source={BtnBackground} style={[s.row, {width: SW / 1.8, height: SW / 6, marginTop: '3%'}]} resizeMode='stretch'>
+					<ImageBackground source={BtnBackground} style={[s.row, {width: SW / 1.8, height: SW / 6, marginTop: '3%'}]} resizeMode="stretch">
 						<Image source={ZoomIcon} style={s.iconImage} />
 						<View>
 							<Text style={TS.homeGrid}>Zoom Meet</Text>

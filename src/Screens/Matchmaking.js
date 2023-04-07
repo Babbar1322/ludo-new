@@ -122,7 +122,7 @@ export default function Matchmaking({route, navigation}) {
 			if (data.typee === 'joining') {
 				setStatusText('Entering Game...');
 				BgMusic.pause();
-				navigation.navigate('Blue', {
+				navigation.navigate('Game', {
 					player1: {
 						id: user.id,
 						name: user.name,
@@ -210,7 +210,7 @@ export default function Matchmaking({route, navigation}) {
 		<ImageBackground source={BG} style={{flex: 1, justifyContent: 'center'}}>
 			<Popup
 				closeButton
-				icon='alert'
+				icon="alert"
 				visible={popupVisible}
 				color={c.yellow}
 				title={'Time Up'}
@@ -220,7 +220,7 @@ export default function Matchmaking({route, navigation}) {
 				}}>
 				<Text style={[s.textCenter, s.textWhite, s.bold, {fontSize: 15, marginBottom: '5%'}]}>No User is Active{'\n'}If You want to continue please retry.</Text>
 				<Button
-					mode='contained'
+					mode="contained"
 					color={c.yellow}
 					disabled={loading}
 					onPress={() => {
@@ -230,12 +230,12 @@ export default function Matchmaking({route, navigation}) {
 					Retry
 				</Button>
 			</Popup>
-			<Popup color={c.yellow} icon='alert' closeButton onClose={() => setVisible(false)} visible={visible} title={'Are You Sure?\nYou Want to Go Back?'}>
+			<Popup color={c.yellow} icon="alert" closeButton onClose={() => setVisible(false)} visible={visible} title={'Are You Sure?\nYou Want to Go Back?'}>
 				<View style={[s.row, s.justifyAround]}>
-					<Button mode='contained' color={c.yellow} disabled={loading} onPress={() => setVisible(false)}>
+					<Button mode="contained" color={c.yellow} disabled={loading} onPress={() => setVisible(false)}>
 						Cancel
 					</Button>
-					<Button mode='outlined' color={c.yellow} disabled={loading} loading={loading} style={{borderColor: c.yellow}} onPress={handleUnsubscribe}>
+					<Button mode="outlined" color={c.yellow} disabled={loading} loading={loading} style={{borderColor: c.yellow}} onPress={handleUnsubscribe}>
 						Go Back
 					</Button>
 				</View>

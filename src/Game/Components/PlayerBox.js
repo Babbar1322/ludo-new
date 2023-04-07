@@ -174,7 +174,7 @@ export default class PlayerBox extends Component {
 	};
 
 	renderImage = () => {
-		switch (this.props.player.player?.avatar) {
+		switch (this.props.player.user?.avatar) {
 			case 'Avatar1':
 				return Avatar1;
 			case 'Avatar2':
@@ -250,7 +250,7 @@ export default class PlayerBox extends Component {
 								top: '5%',
 								right: '5%',
 							}}>
-							{<Text style={{color: '#fff', fontFamily: 'DailyHours', fontSize: adjustFont(50)}}>{diceNumber}</Text>}
+							{Boolean(diceNumber) && <Text style={{color: '#fff', fontFamily: 'DailyHours', fontSize: adjustFont(50)}}>{diceNumber}</Text>}
 						</View>
 					)}
 					{player.color === turn && <AnimatedLottieView source={require('../Assets/Lotties/Expanding.json')} style={styles.lottie} autoPlay loop />}
@@ -260,7 +260,7 @@ export default class PlayerBox extends Component {
 					</View>
 				</LinearGradient>
 				<View style={{paddingHorizontal: '3%', paddingVertical: '1%'}}>
-					<Text style={{color: '#fff', fontSize: adjustFont(9), textAlign: 'center'}}>{player.player?.name}</Text>
+					<Text style={{color: '#fff', fontSize: adjustFont(9), textAlign: 'center'}}>{player.user?.name}</Text>
 				</View>
 			</View>
 		);
