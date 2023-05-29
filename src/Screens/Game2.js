@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {ImageBackground, StatusBar, Text, ToastAndroid, Vibration, View} from 'react-native';
+import {Alert, BackHandler, ImageBackground, StatusBar, Text, ToastAndroid, Vibration, View} from 'react-native';
 import socket from '../Game/Components/Socket';
 
 import {BLUE, FINISHED, FOUR, GREEN, ONE, RED, THREE, TWO, YELLOW} from '../Game/Utils/constants';
@@ -15,7 +15,7 @@ import Piece from '../Game/Components/Piece';
 import Dice from '../Game/Components/Dice';
 import TopRow from '../Game/Components/TopRow';
 
-import {CutAudio, DiceAudio, FinishAudio, LoseAudio, SafeAudio, WinAudio} from '../Game/Components/Sounds';
+import {CutAudio, DiceAudio, FinishAudio, LoseAudio, SafeAudio, StepAudio, WinAudio} from '../Game/Components/Sounds';
 import Popup from '../Components/Popup';
 import {Button} from 'react-native-paper';
 
@@ -49,6 +49,7 @@ export default function Game({route, navigation}) {
 			color: BLUE,
 			animateForSelection: false,
 			position: P[1],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -56,6 +57,7 @@ export default function Game({route, navigation}) {
 			color: BLUE,
 			animateForSelection: false,
 			position: P[1],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -63,6 +65,7 @@ export default function Game({route, navigation}) {
 			color: BLUE,
 			animateForSelection: false,
 			position: P[1],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -70,6 +73,7 @@ export default function Game({route, navigation}) {
 			color: BLUE,
 			animateForSelection: false,
 			position: P[1],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -77,6 +81,7 @@ export default function Game({route, navigation}) {
 			color: GREEN,
 			animateForSelection: false,
 			position: P[27],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -84,6 +89,7 @@ export default function Game({route, navigation}) {
 			color: GREEN,
 			animateForSelection: false,
 			position: P[27],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -91,6 +97,7 @@ export default function Game({route, navigation}) {
 			color: GREEN,
 			animateForSelection: false,
 			position: P[27],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -98,6 +105,7 @@ export default function Game({route, navigation}) {
 			color: GREEN,
 			animateForSelection: false,
 			position: P[27],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 	]);
@@ -146,12 +154,12 @@ export default function Game({route, navigation}) {
 		if (availablePieces.length === 1) {
 			onPieceTouch(availablePieces[0]);
 		} else if (availablePieces.length <= 0) {
-			onPieceTouch(pieces[0]);
+			onPieceTouch(pieces.current[pieces.current.length - 1]);
 		}
 	};
 
 	const rollDice = () => {
-		if (!isWaitingForRollDice.current) {
+		if (!isWaitingForRollDice.current || isRolling.current) {
 			return;
 		}
 		isRolling.current = true;
@@ -187,8 +195,9 @@ export default function Game({route, navigation}) {
 					setTimeout(() => {
 						// console.log('Inside the loop');
 						piece.position = cell[i];
+						StepAudio.play();
 						resolve();
-					}, 150);
+					}, 200);
 				});
 				updateState();
 			} else {
@@ -203,6 +212,24 @@ export default function Game({route, navigation}) {
 				SafeAudio.play();
 			}
 			if (i >= endPosition) {
+				// if (checkOppositePawn(piece).length > 0) {
+				// 	piece.position = [cell[i][0] + 5, cell[i][1], cell[i][2]];
+				// 	checkOppositePawn(piece).forEach(p => {
+				// 		// cutPiece(p);
+				// 		p.position = [cell[i][0] - 5, cell[i][1], cell[i][2]];
+				// 	});
+				// 	updateState();
+				// 	// cutPiece(checkOppositePawn(piece)[0]);
+				// }
+				if (checkOppositePawn(piece).length > 0) {
+					console.log('Opposite Pawn', checkOppositePawn(piece));
+					piece.position = [cell[i][0] + 3, cell[i][1], cell[i][2]];
+					checkOppositePawn(piece).forEach((p, idx, array) => {
+						p.position = [cell[i][0] - 3, cell[i][1], cell[i][2]];
+						// p.size -= array.length * 3;
+					});
+					updateState();
+				}
 				return 'Completed';
 			}
 		}
@@ -228,14 +255,33 @@ export default function Game({route, navigation}) {
 		});
 	};
 
+	const checkOppositePawn = piece => {
+		const opponentPieces = pieces.current.filter(p => p.position[2] === piece.position[2] && p.color !== piece.color);
+		return opponentPieces;
+	};
+
+	const handleBackPress = () => {
+		Alert.alert('Hold on!', 'Are you sure you want to go back?', [
+			{
+				text: 'Cancel',
+				onPress: () => null,
+				style: 'cancel',
+			},
+			{text: 'Exit', onPress: handleUnsubscribe},
+		]);
+		return true;
+	};
+
 	useEffect(() => {
-		socket.emit('pong');
 		// socket.emit('clearAllRooms', roomId);
 		// socket.on('clearSuccess', data => {
 		socket.emit('createRoom', roomId);
 		socket.emit('joining', {
 			room_id: roomId,
 			game_id: gameId,
+		});
+		socket.emit('pong', {
+			room_id: roomId,
 		});
 		// });
 		socket.on('ping', data => {
@@ -447,14 +493,14 @@ export default function Game({route, navigation}) {
 			}
 			if (data.type === 'FAILED') {
 				if (data.turn === user.id) {
-					turn.current = BLUE;
+					turn.current = GREEN;
 					isWaitingForRollDice.current = true;
 					opponentDice.current = 0;
 					timerKey.current += 1;
 					updateState();
 					// this.setState(prev => ({turn: BLUE, opponentDice: 0, key: prev.key + 1, timerRunning: true, isWaitingForRollDice: true, prevData: {}, disable: false}));
 				} else {
-					turn.current = GREEN;
+					turn.current = BLUE;
 					opponentDice.current = 0;
 					timerKey.current += 1;
 					updateState();
@@ -481,9 +527,11 @@ export default function Game({route, navigation}) {
 			}
 			updateState();
 		});
+		BackHandler.addEventListener('hardwareBackPress', handleBackPress);
 		console.log(update);
 		return () => {
 			socket.off();
+			BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
 		};
 	}, []);
 	return (
@@ -512,7 +560,7 @@ export default function Game({route, navigation}) {
 						color={piece.color}
 						position={piece.position}
 						onTouch={() => onPieceTouch(piece)}
-						size={Constants.CELL_SIZE}
+						size={piece.size}
 						animateForSelection={piece.animateForSelection}
 						key={idx}
 					/>

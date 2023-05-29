@@ -234,23 +234,11 @@ export default function Home({navigation}) {
 
 					<View style={[s.row, s.justifyAround, {marginTop: '3%'}]}>
 						<HomeGrid onPress={() => navigation.navigate('GameOptions')} img={TwoPlayers} label="2 Players" />
-						<HomeGrid onPress={() => navigation.navigate('SocketTest')} img={Single} label="VS Computer" />
+						<HomeGrid onPress={() => ToastAndroid.show('Coming Soon', ToastAndroid.SHORT)} img={Single} label="VS Computer" />
 					</View>
 					<View style={[s.row, s.justifyAround, {marginTop: '3%'}]}>
-						<HomeGrid
-							onPress={() =>
-								navigation.navigate('Game', {player1: {id: 155, name: 'Gursahb', avatar: 'Avatar1'}, player2: {id: 282, name: 'Ludo', avatar: 'Avatar3'}})
-							}
-							img={FourPlayers}
-							label="4 Players"
-						/>
-						<HomeGrid
-							img={Private}
-							label="Private"
-							onPress={() =>
-								navigation.navigate('Game2', {player1: {id: 155, name: 'Gursahb', avatar: 'Avatar1'}, player2: {id: 282, name: 'Ludo', avatar: 'Avatar3'}})
-							}
-						/>
+						<HomeGrid onPress={() => ToastAndroid.show('Coming Soon', ToastAndroid.SHORT)} img={FourPlayers} label="4 Players" />
+						<HomeGrid img={Private} label="Private" onPress={() => ToastAndroid.show('Coming Soon', ToastAndroid.SHORT)} />
 					</View>
 					<View style={[s.row, s.justifyBetween, {position: 'absolute', top: 0, left: 0, right: 0}]}>
 						<View style={s.alignCenter}>
@@ -315,7 +303,11 @@ export default function Home({navigation}) {
 						<Image source={TelegramIcon} style={s.smallIcon} />
 					</TouchableOpacity>
 				</View>
-				<Footer withdraw={() => navigation.navigate('Blue')} settings={() => navigation.navigate('Settings')} leaderBord={() => navigation.navigate('ActivationHistory')} />
+				<Footer
+					withdraw={() => navigation.navigate('Withdrawals')}
+					settings={() => navigation.navigate('Settings')}
+					leaderBord={() => navigation.navigate('ActivationHistory')}
+				/>
 			</ImageBackground>
 		</View>
 	);

@@ -1,3 +1,5 @@
 import Sound from 'react-native-sound';
 
-export default SafeAudio = new Sound('safe.wav', Sound.MAIN_BUNDLE);
+const SafeAudio = new Sound('safe.wav', Sound.MAIN_BUNDLE);
+
+export default SafeAudio;

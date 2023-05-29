@@ -53,12 +53,15 @@ import Popup from './src/Components/Popup';
 import Sound from 'react-native-sound';
 import BgMusic from './src/Game/Components/BgMusic';
 import {selectIsMusicPlaying, setMusic} from './src/Redux/Slices/GameSlice';
-Sound.setCategory('Ambient', true);
+import GameBoard from './src/Game/Components/GameBoard';
+Sound.setCategory('Playback', true);
 
 export default function Wrapper() {
+	// SplashScreen.hide();
 	return (
 		<Provider store={Store}>
 			<App />
+			{/* <GameBoard /> */}
 		</Provider>
 	);
 }
@@ -113,19 +116,20 @@ function App() {
 	useEffect(() => {
 		const subscription = AppState.addEventListener('change', state => {
 			// console.log(isPlaying, 'Is Music Playin');
-			// AsyncStorage.getItem('music', (err, res) => {
-			// 	if (res !== null) {
-			// 		const music = JSON.parse(res);
+			AsyncStorage.getItem('music', (_err, res) => {
+				if (res !== null) {
+					const music = JSON.parse(res);
+					console.log(music, typeof music, 'Music');
 
-			// 		if (state === 'active' && music) {
-			// 			BgMusic.play();
-			// 		}
-			// 	} else {
-			// 		if (state === 'active' && isLoggedIn) {
-			// 			BgMusic.play();
-			// 		}
-			// 	}
-			// });
+					if (state === 'active' && music) {
+						BgMusic.play();
+					}
+				} else {
+					if (state === 'active' && isLoggedIn) {
+						BgMusic.play();
+					}
+				}
+			});
 			if (state === 'background' || state === 'inactive') {
 				BgMusic.pause();
 			}
@@ -148,7 +152,7 @@ function App() {
 				screenOptions={{
 					headerShown: false,
 					// cardStyleInterpolator: CardStyleInterpolators.forBottomSheetAndroid,
-					animation: 'fade_from_bottom',
+					// animation: 'fade_from_bottom',
 				}}>
 				{isLoggedIn ? (
 					<>
@@ -162,11 +166,7 @@ function App() {
 							<Stack.Screen name="GameOptions" component={GameOptions} />
 							<Stack.Screen name="Settings" component={Settings} />
 						</Stack.Group>
-						<Stack.Group
-							screenOptions={{
-								// cardStyleInterpolator: CardStyleInterpolators.forFadeFromCenter,
-								animation: 'fade',
-							}}>
+						<Stack.Group>
 							<Stack.Screen name="LevelIncome" component={LevelIncome} />
 							<Stack.Screen name="Downline" component={Downline} />
 							<Stack.Screen name="Directs" component={Directs} />
@@ -178,11 +178,7 @@ function App() {
 							<Stack.Screen name="GameLevelIncome" component={GameLevelIncome} />
 							<Stack.Screen name="GameRecords" component={GameRecords} />
 						</Stack.Group>
-						<Stack.Group
-							screenOptions={{
-								// cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-								animation: 'slide_from_right',
-							}}>
+						<Stack.Group>
 							<Stack.Screen name="Game" component={Game} />
 							<Stack.Screen name="GamePure" component={GamePure} />
 							<Stack.Screen name="Game2" component={Game2} />

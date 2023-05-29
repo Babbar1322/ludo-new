@@ -2,12 +2,12 @@ import {Dimensions} from 'react-native';
 export const SW = Math.floor(Dimensions.get('screen').width);
 export const SH = Math.floor(Dimensions.get('screen').height);
 
-// export const GAME_API = 'http://45.79.86.237:4000/api/';
-// export const SOCKET_API = 'http://45.79.86.237:4000';
+export const GAME_API = 'http://45.79.86.237:4000/api/';
+export const SOCKET_API = 'http://45.79.86.237:4000';
 // export const GAME_API = 'http://45.79.86.237:4001/api/';
 // export const SOCKET_API = 'http://45.79.86.237:4001';
-export const GAME_API = 'http://66.228.48.56:4001/api/';
-export const SOCKET_API = 'http://66.228.48.56:4001';
+// export const GAME_API = 'http://66.228.48.56:4001/api/';
+// export const SOCKET_API = 'http://66.228.48.56:4001';
 // export const GAME_API = 'http://127.0.0.1:4001/api/';
 // export const SOCKET_API = 'http://127.0.0.1:4001';
 

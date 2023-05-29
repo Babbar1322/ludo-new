@@ -1,5 +1,5 @@
-import React, {useEffect, useState, useRef} from 'react';
-import {ImageBackground, StatusBar, Text, ToastAndroid, Vibration, View} from 'react-native';
+import React, {useEffect, useState, useRef, useCallback} from 'react';
+import {ImageBackground, StatusBar, Text, ToastAndroid, Vibration, View, BackHandler, Alert} from 'react-native';
 import socket from '../Game/Components/Socket';
 
 import {BLUE, FINISHED, FOUR, GREEN, ONE, RED, THREE, TWO, YELLOW} from '../Game/Utils/constants';
@@ -15,7 +15,7 @@ import Piece from '../Game/Components/Piece';
 import Dice from '../Game/Components/Dice';
 import TopRow from '../Game/Components/TopRow';
 
-import {CutAudio, DiceAudio, FinishAudio, LoseAudio, SafeAudio, WinAudio} from '../Game/Components/Sounds';
+import {CutAudio, DiceAudio, FinishAudio, LoseAudio, SafeAudio, StepAudio, WinAudio} from '../Game/Components/Sounds';
 import Popup from '../Components/Popup';
 import {Button} from 'react-native-paper';
 
@@ -49,6 +49,7 @@ export default function Game({route, navigation}) {
 			color: BLUE,
 			animateForSelection: false,
 			position: P[1],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -56,6 +57,7 @@ export default function Game({route, navigation}) {
 			color: BLUE,
 			animateForSelection: false,
 			position: P[1],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -63,6 +65,7 @@ export default function Game({route, navigation}) {
 			color: BLUE,
 			animateForSelection: false,
 			position: P[1],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -70,6 +73,7 @@ export default function Game({route, navigation}) {
 			color: BLUE,
 			animateForSelection: false,
 			position: P[1],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -77,6 +81,7 @@ export default function Game({route, navigation}) {
 			color: GREEN,
 			animateForSelection: false,
 			position: P[27],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -84,6 +89,7 @@ export default function Game({route, navigation}) {
 			color: GREEN,
 			animateForSelection: false,
 			position: P[27],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -91,6 +97,7 @@ export default function Game({route, navigation}) {
 			color: GREEN,
 			animateForSelection: false,
 			position: P[27],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 		{
@@ -98,6 +105,7 @@ export default function Game({route, navigation}) {
 			color: GREEN,
 			animateForSelection: false,
 			position: P[27],
+			size: Constants.CELL_SIZE - 5,
 			score: 0,
 		},
 	]);
@@ -127,6 +135,25 @@ export default function Game({route, navigation}) {
 		setUpdate(prev => !prev);
 	};
 
+	// const setPositions = useCallback(() => {
+	// 	let sizeMultiplyer = 1;
+	// 	for (let i = 0; i < pieces.current.length; i++) {
+	// 		for (let j = 0; j < pieces.current.length; j++) {
+	// 			if (pieces.current[i].position[2] === pieces.current[j].position[2]) {
+	// 				if (i === j) {
+	// 					pieces.current[i].position[0] = pieces.current[i].position[0] + 3;
+	// 					sizeMultiplyer++;
+	// 				} else {
+	// 					pieces.current[j].position[0] = pieces.current[j].position[0] - 3;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	if (sizeMultiplyer > 1) {
+	// 		pieces.current.map(p => p.color === BLUE && (p.size = Constants.CELL_SIZE - sizeMultiplyer));
+	// 	}
+	// }, []);
+
 	const isMovePossibleForPiece = piece => {
 		const position = piece.position[2];
 		let isMovePossible = false;
@@ -147,12 +174,12 @@ export default function Game({route, navigation}) {
 		if (availablePieces.length === 1) {
 			onPieceTouch(availablePieces[0]);
 		} else if (availablePieces.length <= 0) {
-			onPieceTouch(pieces[0]);
+			onPieceTouch(pieces.current[0]);
 		}
 	};
 
 	const rollDice = () => {
-		if (!isWaitingForRollDice.current) {
+		if (!isWaitingForRollDice.current || isRolling.current) {
 			return;
 		}
 		isRolling.current = true;
@@ -170,6 +197,7 @@ export default function Game({route, navigation}) {
 			// console.log(diceNumber.current, turn.current, piece.color, isWaitingForRollDice.current);
 			return;
 		}
+		console.log('onPieceTouch', piece);
 		disableInput.current = true;
 		updateState();
 		socket.emit('pawnMove', {
@@ -188,12 +216,13 @@ export default function Game({route, navigation}) {
 					setTimeout(() => {
 						// console.log('Inside the loop');
 						piece.position = cell[i];
+						StepAudio.play();
 						// if (piece.color === GREEN) {
 						// 	console.log(piece.position);
 						// }
 						resolve();
 						updateState();
-					}, 150);
+					}, 200);
 				});
 				updateState();
 			} else {
@@ -209,6 +238,17 @@ export default function Game({route, navigation}) {
 				SafeAudio.play();
 			}
 			if (i >= endPosition) {
+				console.log('Completed', endPosition);
+				console.log('Opposite Pawn', checkOppositePawn(piece));
+				if (checkOppositePawn(piece).length > 0) {
+					console.log('Opposite Pawn', checkOppositePawn(piece));
+					piece.position = [cell[i][0] + 3, cell[i][1], cell[i][2]];
+					checkOppositePawn(piece).forEach((p, idx, array) => {
+						p.position = [cell[i][0] - 3, cell[i][1], cell[i][2]];
+						// p.size -= array.length * 3;
+					});
+					updateState();
+				}
 				return 'Completed';
 			}
 		}
@@ -234,15 +274,36 @@ export default function Game({route, navigation}) {
 		});
 	};
 
-	useEffect(() => {
-		socket.emit('pong');
-		socket.emit('clearRooms', roomId);
-		socket.on('clearSuccess', data => {
-			socket.emit('createRoom', roomId);
+	const checkOppositePawn = piece => {
+		const opponentPieces = pieces.current.filter(p => {
+			return p.position[2] === piece.position[2] && p.color !== piece.color;
 		});
+		return opponentPieces;
+	};
+
+	const handleBackPress = () => {
+		Alert.alert('Hold on!', 'Are you sure you want to go back?', [
+			{
+				text: 'Cancel',
+				onPress: () => null,
+				style: 'cancel',
+			},
+			{text: 'Exit', onPress: handleUnsubscribe},
+		]);
+		return true;
+	};
+
+	useEffect(() => {
+		// socket.emit('clearRooms', roomId);
+		// socket.on('clearSuccess', data => {
+		socket.emit('createRoom', roomId);
+		// });
 		// socket.on('roomsList', data => {
 		// 	console.log(data);
 		// });
+		socket.emit('pong', {
+			room_id: roomId,
+		});
 		socket.on('ping', data => {
 			// console.log('Ping Game 1', data);
 			setPing(Date.now() - pingTime.current);
@@ -258,6 +319,7 @@ export default function Game({route, navigation}) {
 				pieces.current.map(piece => {
 					if (piece.color === BLUE && isMovePossibleForPiece(piece)) {
 						piece.animateForSelection = true;
+						// piece.size = Constants.CELL_SIZE + 5;
 					} else {
 						piece.animateForSelection = false;
 					}
@@ -287,8 +349,8 @@ export default function Game({route, navigation}) {
 			}
 			if (data.type === 'SUCCESS') {
 				data.opp_position.forEach(async item => {
-					const player = players.current.find(player => player.color === item.color);
-					const piece = pieces.current.find(piece => piece.name === item.pawn && piece.color === player.color);
+					const player = players.current.find(p => p.color === item.color);
+					const piece = pieces.current.find(p => p.name === item.pawn && p.color === player.color);
 
 					piece.score = item.score;
 
@@ -449,6 +511,7 @@ export default function Game({route, navigation}) {
 				pieces.current.map(item => {
 					item.animateForSelection = false;
 				});
+				// setPositions();
 				updateState();
 				if (data.user_id === user.id) {
 					players.current.map(player => {
@@ -505,9 +568,11 @@ export default function Game({route, navigation}) {
 			}
 			updateState();
 		});
+		BackHandler.addEventListener('hardwareBackPress', handleBackPress);
 		console.log(update);
 		return () => {
 			socket.off();
+			BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
 		};
 	}, []);
 	return (
@@ -536,7 +601,7 @@ export default function Game({route, navigation}) {
 						color={piece.color}
 						position={piece.position}
 						onTouch={() => onPieceTouch(piece)}
-						size={Constants.CELL_SIZE}
+						size={piece.size}
 						animateForSelection={piece.animateForSelection}
 						key={idx}
 					/>

@@ -165,13 +165,14 @@ export default function Matchmaking({route, navigation}) {
 		});
 
 		return () => {
+			// remove backhandler subscription
+			BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
 			socket.off();
 			// socket.disconnect();
 			subscription.remove();
 			// unsub.remove();
 			// AppState.removeEventListener('change', handleAppState);
 			BackgroundTimer.clearInterval(timerId.current);
-			BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
 		};
 	}, []);
 

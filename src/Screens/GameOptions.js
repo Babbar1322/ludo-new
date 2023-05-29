@@ -62,8 +62,8 @@ export default function GameOptions({navigation}) {
 			// 		wallet_type: value,
 			// 	}),
 			// });
-			console.log(GAME_API + 'add_users');
-			const res = await axios.post('http://66.228.48.56:4001/api/add_users', {
+			// console.log(GAME_API + 'add_users');
+			const res = await axios.post(GAME_API + 'add_users', {
 				user_id: user.id,
 				package_id: package_id,
 				status: 0,
